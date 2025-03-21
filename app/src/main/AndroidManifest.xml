@@ -24,11 +24,11 @@
             </intent-filter>
         </activity>
         <service
-            android:name=".ForegroundAppServiceImpl"
+            android:name=".InstalledAppsServiceImpl"
             android:exported="true">
-<!--            <intent-filter>-->
-<!--                <action android:name="me.francis.services_handson34." />-->
-<!--            </intent-filter>-->
+            <!--            <intent-filter>-->
+            <!--                <action android:name="me.francis.services_handson34." />-->
+            <!--            </intent-filter>-->
         </service>
     </application>
 
