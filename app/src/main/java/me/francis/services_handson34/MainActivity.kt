@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import me.francis.services_handson34.ui.theme.Services_HandsOn34Theme
 import kotlin.random.Random
@@ -58,53 +59,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // *** Ciclos de vida *** //
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         println("Creating Activity")
         enableEdgeToEdge()
         setContent {
-            // *** Conteúdo da tela *** //
             Services_HandsOn34Theme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    var appList = remember { mutableStateListOf<String>() }
-
-                    Box {
-                        Column(
-                            verticalArrangement = Arrangement.SpaceBetween,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            AppList(
-                                appNames = appList,
-                                modifier = Modifier
-                                    .padding(innerPadding)
-                                    .weight(1f)
-                            )
-
-                            Button(
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = {
-                                    if (isServiceConnected) {
-                                        getInstalledApps().forEach { appList.add(it) }
-                                    } else {
-                                        Toast.makeText(
-                                            applicationContext,
-                                            "Service not connected",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                    }
-                                }
-                            ) {
-                                Text(text = "Buscar Apps Instalados")
-                            }
-                        }
-
-                        RandomButtonPosition(applicationContext)
-                    }
-                }
+                MainContent(applicationContext, ::getInstalledApps)
             }
-            // *** Fim do conteúdo da tela *** //
         }
     }
 
@@ -138,7 +101,6 @@ class MainActivity : ComponentActivity() {
         println("Destroying Activity")
         super.onDestroy()
     }
-    // *** Fim dos ciclos de vida *** //
 
     private fun getInstalledApps(): List<String> {
         return if (isServiceConnected) {
@@ -146,6 +108,43 @@ class MainActivity : ComponentActivity() {
         } else {
             Toast.makeText(applicationContext, "Service not connected", Toast.LENGTH_LONG).show()
             emptyList()
+        }
+    }
+
+}
+
+@RequiresApi(Build.VERSION_CODES.R)
+@Composable
+fun MainContent(
+    context: Context,
+    getInstalledApps: () -> List<String>,
+) {
+    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        val appList = remember { mutableStateListOf<String>() }
+
+        Box {
+            Column(
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                AppList(
+                    appNames = appList,
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .weight(1f)
+                )
+
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        getInstalledApps().forEach { appList.add(it) }
+                    }
+                ) {
+                    Text(text = "Buscar Apps Instalados")
+                }
+            }
+
+            RandomButtonPosition(context)
         }
     }
 }
@@ -156,7 +155,7 @@ private fun AppList(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier.testTag("app_list"),
         verticalArrangement = Arrangement.Center
     ) {
         if (appNames.isEmpty()) {
