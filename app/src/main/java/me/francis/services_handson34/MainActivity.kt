@@ -43,16 +43,21 @@ import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
 
+    // Variável para armazenar a referência ao serviço de aplicativos instalados
     private var installedAppsService: IInstalledAppsService? = null
+    // Flag para controlar o estado da conexão com o serviço
     private var isServiceConnected = false
 
+    // Objeto de conexão com o serviço que implementa ServiceConnection
     private val serviceConnection = object : ServiceConnection {
+        // Chamado quando a conexão com o serviço é estabelecida
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             installedAppsService = IInstalledAppsService.Stub.asInterface(service)
             isServiceConnected = true
             Toast.makeText(applicationContext, "Service connected", Toast.LENGTH_LONG).show()
         }
 
+        // Chamado quando a conexão com o serviço é perdida
         override fun onServiceDisconnected(name: ComponentName?) {
             installedAppsService = null
             isServiceConnected = false
@@ -63,7 +68,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         println("Creating Activity")
-        enableEdgeToEdge()
+        enableEdgeToEdge() // Ativa o modo edge-to-edge (borda a borda)
         setContent {
             Services_HandsOn34Theme {
                 MainContent(applicationContext, ::getInstalledApps)
@@ -74,7 +79,9 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         println("Starting Activity")
+        // Prepara a intent para vincular ao serviço
         val intent = Intent(this, InstalledAppsServiceImpl::class.java)
+        // Vincula ao serviço com a flag BIND_AUTO_CREATE
         bindService(intent, serviceConnection, BIND_AUTO_CREATE)
     }
 
@@ -91,6 +98,7 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         println("Stopping Activity")
+        // Desvincula o serviço se estiver conectado
         if (isServiceConnected) {
             unbindService(serviceConnection)
             isServiceConnected = false
@@ -102,6 +110,7 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    // Função para obter a lista de aplicativos instalados
     private fun getInstalledApps(): List<String> {
         return if (isServiceConnected) {
             installedAppsService?.installedApps ?: emptyList()
@@ -117,26 +126,32 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainContent(
     context: Context,
-    getInstalledApps: () -> List<String>,
+    getInstalledApps: () -> List<String>, // Callback para obter apps instalados
 ) {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        // Estado para armazenar a lista de aplicativos
         val appList = remember { mutableStateListOf<String>() }
 
+        // Box permite sobrepor componentes
         Box {
+            // Coluna organiza os componentes verticalmente
             Column(
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                // Lista de aplicativos
                 AppList(
                     appNames = appList,
                     modifier = Modifier
                         .padding(innerPadding)
-                        .weight(1f)
+                        .weight(1f)  // Ocupa todo o espaço disponível
                 )
 
+                // Botão para buscar aplicativos
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
+                        // Adiciona cada app retornado à lista
                         getInstalledApps().forEach { appList.add(it) }
                     }
                 ) {
@@ -154,18 +169,22 @@ private fun AppList(
     appNames: List<String>,
     modifier: Modifier = Modifier
 ) {
+    // LazyColumn renderiza apenas os itens visíveis
     LazyColumn(
-        modifier = modifier.testTag("app_list"),
+        modifier = modifier.testTag("app_list"),  // Tag para testes
         verticalArrangement = Arrangement.Center
     ) {
         if (appNames.isEmpty()) {
             item {
-                Text(text = "Nenhum aplicativo listado")
+                Text(text = "Nenhum aplicativo listado")  // Mensagem para lista vazia
             }
         } else {
             items(appNames) { appName ->
-                Text(text = appName)
-                HorizontalDivider(thickness = 1.dp, color = Color.Gray)
+                Text(
+                    modifier = Modifier.testTag("app_list_item"),  // Tag para testes
+                    text = appName, // Nome do aplicativo
+                )
+                HorizontalDivider(thickness = 1.dp, color = Color.Gray) // Divisor
             }
         }
     }
